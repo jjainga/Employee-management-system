@@ -19,7 +19,9 @@
   "dependencies": {
     "chalk": "^4.1.0",
     "chalk-table": "^1.0.2",
+    "console": "^0.7.2",
     "inquirer": "^7.3.3",
-    "mysql2": "^2.2.5"
+    "mysql2": "^2.2.5",
+    "table": "^6.0.3"
   }
 }

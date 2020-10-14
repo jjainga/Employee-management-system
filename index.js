@@ -2,6 +2,7 @@ const inquirer = require("inquirer");
 const chalk = require("chalk");
 const mysql = require("mysql2");
 const chalkTable = require("chalk-table");
+const consoleTable = require("table");
 
 
 //Connect to mysql
@@ -395,6 +396,45 @@ function promptUser() {
                                                 }})
                                         break;
                                     case "Manager":
+                                        //Ask user for the manager_id
+                                        inquirer.prompt([
+                                            {
+                                                name: "manager_id",
+                                                message: "What is the ID of the manager you wish to move to?",
+                                                type: "number" 
+                                            },
+                                            {
+                                                name: "employee_id",
+                                                message: "What is the ID on the employee you are updating?",
+                                                type: "number"
+                                            }]).then(function(answer) {
+                                                let newManager = answer.manager_id;
+                                                let currentEmployee = answer.employee_id;
+                                                console.log(newManager);
+                                                console.log(currentEmployee);
+                                                //Create update query and set the new manager id as the vale where the employee id matches
+                                               
+                                                    connection.query("UPDATE employee SET manager_id = ? WHERE employee_id = ?", [newManager, currentEmployee], function(err, data) {
+                                                    if(err) {
+                                                        throw err;
+                                                    }else {
+                                                        
+                                                        console.log("Sucess!")
+                                                    }
+                                                })
+                                                        //Select all employees
+                                                
+                                                    connection.query("SELECT first_name, last_name FROM employee WHERE employee_id IN (?,?)",[newManager, currentEmployee], function(err, result) {
+                                                    if(err) {
+                                                        throw err;
+                                                    }else {
+                                                        console.log(result)
+                                                       console.log(result[0].first_name + " " + result[0].last_name + " is the new manager for " + result[1].first_name + " " + result[1].last_name + "!");
+                                                    }   
+                                                    promptUser();
+                                                })
+                                                 
+                                            })
                                         break;
                                 }
                             })
