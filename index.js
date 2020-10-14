@@ -31,7 +31,7 @@ function promptUser() {
             name: "start",
             message: "What would you like to do?",
             type: "list",
-            choices: ["Add an Employee", "Add a Role", "Add a Department", "Search","Budget", "Quit"]
+            choices: ["Add an Employee", "Add a Role", "Add a Department", "Search","Budget", "Update Records", "Delete Records", "Quit"]
         }
     ]).then(function(response) {
         switch(response.start) {
@@ -122,9 +122,72 @@ function promptUser() {
                 }})
                 break;
             case "Add a Role":
-                // console.log(chalk.cyanBright("Hello World"));
+                connection.query("SELECT * FROM department", function (err, response) {
+                    let departmentInfo = response
+                    if(err) {
+                        throw err;
+                    }else{
+                    inquirer.prompt({
+                        name: "addWhere",
+                        message: "What department would you like to add the new role to?",
+                        type: "list",
+                        choices: function() {
+                            let departmentArr = [];
+                            for (let i = 0; i < response.length; i++) {
+                                departmentArr.push(response[i].name);
+                            }
+                            return departmentArr;
+                            }
+                        }
+                    ).then(function(answer) {
+                        let currentDepartment = answer.addWhere
+                        inquirer.prompt([
+                        {
+                            name: "title",
+                            message: "What is the name of the role?",
+                            type: "input"
+                        },
+                        {
+                            name: "salary",
+                            message: "What is the annual salary for the role?",
+                            type: "number"
+                        }
+                    ]).then(function(answer) {
+                        let dept_id = 0;
+                        for(let i = 0; i < departmentInfo.length; i++) {
+                            if (departmentInfo[i].name === currentDepartment) {
+                                 dept_id = departmentInfo[i].department_id;
+                            }
+                        }
+                        console.log(dept_id);
+                        connection.query("INSERT INTO roles(title, salary, department_id) VALUES(?,?,?)", [answer.title, answer.salary, dept_id], function(err, data) {
+                            if(err) {
+                                throw err;
+                            }else {
+                                console.log("Role was Added!")
+                            }
+                            promptUser();
+                        })
+                    })
+                    })
+                }})
+                    break;
             case "Add a Department":
-                // console.log(chalk.red("Hello World"));
+                inquirer.prompt({
+                    name: "newDepartment",
+                    message: "What would you like the new Department to be named?",
+                    type: "input"
+                }).then(function(answer) {
+                    connection.query("INSERT INTO department(name) VALUES(?)", answer.newDepartment, function(err, data) {
+                        if(err) {
+                            throw err;
+                        }else {
+                            console.log("Department was Added!")
+                        }
+                        promptUser();
+                    })
+                })
+                break;
             case "Search":
                 // console.log(chalk.blue("Hello World"));
                 inquirer.prompt(
@@ -233,12 +296,13 @@ function promptUser() {
                     })}
                 })
                 break;
-            case "Quit":
+            case "Update Records":
+                break;
+            case "Delete Records":
+                break;
+            default:
                 console.log("Good-Bye!")
                 connection.end();
-                break;
-            
-            default:
                 break;
        }
     })
