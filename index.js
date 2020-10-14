@@ -444,6 +444,62 @@ function promptUser() {
             }})
                 break;
             case "Delete Records":
+                inquirer.prompt(
+                    {
+                        name: "choice",
+                        message: "What record would you like to delete?",
+                        type: "list",
+                        choices: ["Employee", "Role", "Department"]
+                    }
+                ).then(function(response) {
+                    switch (response.choice) {
+                        case "Employee":
+                            inquirer.prompt( {
+                                name: "employee",
+                                message: "What is the ID of the employee you wish to delete?",
+                                type: "number"
+                            }).then(function(answer) {
+                                connection.query("DELETE FROM employee WHERE employee_id = ?", answer.employee, function(err,data) {
+                                    if(err) {
+                                        throw err;
+                                    }else {
+                                        console.log("Employee was deleted!")
+                                    }
+                                })
+                            })
+                            break;
+                        case "Role":
+                            inquirer.prompt( {
+                                name: "role",
+                                message: "What is the ID of the role you wish to delete?",
+                                type: "number"
+                            }).then(function(answer) {
+                                connection.query("DELETE FROM roles WHERE role_id = ?", answer.role, function(err,data) {
+                                    if(err) {
+                                        throw err;
+                                    }else {
+                                        console.log("Role was deleted!")
+                                    }
+                                })
+                            })
+                            break;
+                        case "Department":
+                            inquirer.prompt( {
+                                name: "department",
+                                message: "What is the ID of the department you wish to delete?",
+                                type: "number"
+                            }).then(function(answer) {
+                                connection.query("DELETE FROM department WHERE department_id = ?", answer.department, function(err,data) {
+                                    if(err) {
+                                        throw err;
+                                    }else {
+                                        console.log("department was deleted!")
+                                    }
+                                })
+                            })
+                            break;
+                    }
+                })
                 break;
             default:
                 console.log("Good-Bye!")
@@ -456,7 +512,7 @@ function promptUser() {
 
 //Create funciton to select all roles
 function allRoles() {
-    connection.query("SELECT roles.title, roles.salary, department.name FROM roles LEFT JOIN department ON roles.department_id = department.department_id", function(err,data) {
+    connection.query("SELECT roles.role_id, roles.title, roles.salary, department.name FROM roles LEFT JOIN department ON roles.department_id = department.department_id", function(err,data) {
         if(err) {
             throw err;
         }else {
@@ -465,7 +521,6 @@ function allRoles() {
         promptUser();
     })
 }
-
 //Create function to select all employees
 function allEmployees() {
     connection.query("SELECT * FROM employee", function(err,data) {
@@ -478,7 +533,4 @@ function allEmployees() {
     })
 }
 
-//Create function to get the budget for each department
-
-//Create function to get employees by manager
 
