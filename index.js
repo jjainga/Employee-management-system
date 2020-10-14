@@ -35,7 +35,7 @@ function promptUser() {
         }
     ]).then(function(response) {
         switch(response.start) {
-            case "Add an Employee":
+            case "Add an Employee":``
                 connection.query("SELECT * FROM department", function (err, response) {
                     if(err) {
                         throw err;
@@ -297,6 +297,86 @@ function promptUser() {
                 })
                 break;
             case "Update Records":
+                connection.query("SELECT * FROM department", function (err, response) {
+                    let departmentInfo = response
+                    if(err) {
+                        throw err;
+                    }else{
+                    inquirer.prompt({
+                        name: "addWhere",
+                        message: "What department is the employee you would like to update in?",
+                        type: "list",
+                        choices: function() {
+                            let departmentArr = [];
+                            for (let i = 0; i < response.length; i++) {
+                                departmentArr.push(response[i].name);
+                            }
+                            return departmentArr;
+                            }
+                        }
+                    ).then(function(answer) {
+                        connection.query("SELECT employee.employee_id, employee.first_name, employee.last_name, roles.title, department.name FROM employee JOIN roles JOIN department ON employee.role_id = roles.role_id AND roles.department_id = department.department_id WHERE department.name = ?",answer.addWhere, function(err,data) {
+                            if(err) {
+                                throw err;
+                            }else {
+                            inquirer.prompt({
+                            name: "update",
+                            message: "Who would you like to update?",
+                            type: "list",
+                            choices: function() {
+                                let employeeArr = [];
+                            for (let i = 0; i < data.length; i++) {
+                                employeeArr.push(data[i].employee_id + "/" + data[i].first_name + "/" + data[i].last_name + "/" + data[i].title + "/" + data[i].name);
+                            }
+                            return employeeArr;
+                            }  
+                        }).then(function(answer) {
+                            console.log(answer)
+                            let employeeInfo = answer.update.split("/")
+                            inquirer.prompt({
+                                name: "whatupdate",
+                                message: "Which would you like to update?",
+                                type: "list",
+                                choices: ["Role", "Manager"]
+                            }).then(function(result) {
+                                switch (result.whatupdate) {
+                                    case "Role":
+                                        connection.query("SELECT roles.role_id, roles.title, department.name FROM roles LEFT JOIN department ON roles.department_id = department.department_id", function(err,response) {
+                                            if(err) {
+                                                throw err;
+                                            }else {
+                                                inquirer.prompt({
+                                                    name: "whichRole",
+                                                    messsage: "What is the role you would like to move this employee to?",
+                                                    type: "list",
+                                                    choices: function() {
+                                                        let roleArr = [];
+                                                        for (let i = 0; i < response.length; i++) {
+                                                            roleArr.push(response[i].role_id + "/" + response[i].title + "/" + response[i].name );
+                                                        }
+                                                        return roleArr;
+                                                        } 
+                                                        }).then(function(answer) {
+                                                            let roleInfo = answer.whichRole.split("/")
+                                                            connection.query("UPDATE employee SET employee.role_id = ? WHERE employee.employee_id = ?", [roleInfo[0], employeeInfo[0]], function(err, data) {
+                                                                if(err) {
+                                                                    throw err;
+                                                                }else {
+                                                                    console.log("Sucessfully updated employee's role to " + roleInfo[1] + "!");
+                                                                }
+                                                                promptUser();
+                                                            })
+                                                    })
+                                                }})
+                                        break;
+                                    case "Manager":
+                                        break;
+                                }
+                            })
+                        })
+                    }})
+                })
+            }})
                 break;
             case "Delete Records":
                 break;
