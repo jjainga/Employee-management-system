@@ -260,7 +260,6 @@ function promptUser() {
                                 }
                             ).then(function(answer) {
                                 let manager = answer.manager.split(' ');
-                                console.log(manager);
                                 connection.query("SELECT * FROM employee WHERE first_name = ? AND last_name = ?", [manager[0], manager[1]], function(err,data) {
                                     if(err) {
                                         throw err;
