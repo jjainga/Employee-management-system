@@ -34,8 +34,10 @@ function promptUser() {
             choices: ["Add an Employee", "Add a Role", "Add a Department", "Search","Budget", "Update Records", "Delete Records", "Quit"]
         }
     ]).then(function(response) {
+        //Switch case to direct the user to the correct series of prompts based on thier first selection
         switch(response.start) {
-            case "Add an Employee":``
+            case "Add an Employee":
+                //Selecting all departments to generate a list for the user to select 
                 connection.query("SELECT * FROM department", function (err, response) {
                     if(err) {
                         throw err;
@@ -45,6 +47,7 @@ function promptUser() {
                         message: "What department would you like to add the employee to?",
                         type: "list",
                         choices: function() {
+                            //looping through the department table to give the user choices for each department
                             let departmentArr = [];
                             for (let i = 0; i < response.length; i++) {
                                 departmentArr.push(response[i].name);
@@ -53,7 +56,9 @@ function promptUser() {
                             }
                         }
                     ).then(function(answer) {
+                        //creating a variable to hold current department
                         let currentDepartment = answer.addWhere
+                        //selecting all the roles with in the current department
                         connection.query("SELECT roles.title FROM roles JOIN department ON roles.department_id = department.department_id WHERE department.name = ?", answer.addWhere, function(err, data) {
                             if(err) {
                                 throw err;
@@ -63,6 +68,7 @@ function promptUser() {
                                     message: "What role is the new employee going to have?",
                                     type: "list",
                                     choices: function() {
+                                        //looping through the roles array and only pushing the roles for the current department
                                         let roleArr = [];
                                         for (let i = 0; i < data.length; i++) {
                                             roleArr.push(data[i].title);
@@ -70,15 +76,13 @@ function promptUser() {
                                         return roleArr;
                                         }
                                 }).then(function(answer) {
-                                    // console.log(answer.whichRole);
-                                    // console.log(currentDepartment);
+                                    //selecting employess and creating a variable below inorder to save employee id nunmbers
                                     connection.query("SELECT roles.role_id, roles.title, department.department_id, department.name FROM roles JOIN department ON roles.department_id = department.department_id WHERE roles.title = ? AND department.name = ?", [answer.whichRole, currentDepartment], function(err,dataResponse) {
                                         if(err) {
                                             throw err;
                                         }
                                         else{ 
                                             let employeeInfo = dataResponse;
-                                                console.log(employeeInfo);
                                             inquirer.prompt([
                                              {
                                                 name: "first",
@@ -96,14 +100,16 @@ function promptUser() {
                                                 type: "input"
                                             }
                                             ]).then(function(answer) {
+                                                //Turning the manager selected into an array in order to put both names into the nest query
                                                 let manager = answer.manager.split(' ');
-                                                console.log(manager);
+                                                //selecting employees by id inorder to set manager id
                                                 connection.query("SELECT * FROM employee WHERE first_name = ? AND last_name = ?", [manager[0], manager[1]], function(err,data) {
                                                     if(err) {
                                                         throw err;
                                                     }else if (data.length === 0) {
                                                         console.log("Not a manager, please try again");
                                                     }else {
+                                                    //Inserting into the employee table with a new employee who has a role, department and a manager
                                                     connection.query("INSERT INTO employee(first_name, last_name, role_id, manager_id) VALUES(?,?,?,?)", [answer.first, answer.last,employeeInfo[0].role_id, data[0].employee_id], function (err,data) {
                                                         if(err) {
                                                             throw err;
@@ -122,6 +128,7 @@ function promptUser() {
                 }})
                 break;
             case "Add a Role":
+                //Selecting all departments to generate a list for the user to select 
                 connection.query("SELECT * FROM department", function (err, response) {
                     let departmentInfo = response
                     if(err) {
@@ -153,13 +160,14 @@ function promptUser() {
                             type: "number"
                         }
                     ]).then(function(answer) {
+                        //looking through the department table to find the correct id
                         let dept_id = 0;
                         for(let i = 0; i < departmentInfo.length; i++) {
                             if (departmentInfo[i].name === currentDepartment) {
                                  dept_id = departmentInfo[i].department_id;
                             }
                         }
-                        console.log(dept_id);
+                        //Creating a new role for the selected department and inserting it into the roles table
                         connection.query("INSERT INTO roles(title, salary, department_id) VALUES(?,?,?)", [answer.title, answer.salary, dept_id], function(err, data) {
                             if(err) {
                                 throw err;
@@ -173,11 +181,13 @@ function promptUser() {
                 }})
                     break;
             case "Add a Department":
+                //Asking user what department they want to create
                 inquirer.prompt({
                     name: "newDepartment",
                     message: "What would you like the new Department to be named?",
                     type: "input"
                 }).then(function(answer) {
+                    //Inserting new departmenet into the department table
                     connection.query("INSERT INTO department(name) VALUES(?)", answer.newDepartment, function(err, data) {
                         if(err) {
                             throw err;
@@ -200,13 +210,16 @@ function promptUser() {
                 ).then(function(answer) {
                     switch(answer.Search) {
                         case "All Employees":
+                            //calling a function that selects all employees
                             allEmployees();
                             break;
                         case "Role":
+                            //Calling a function that selects all roles
                             allRoles();
                             break;
 
                         case "Department":
+                            //Selects the depatment table and gives the departments as choices for the user
                             connection.query("SELECT * FROM department", function (err, response) {
                                 inquirer.prompt(
                                     {
@@ -223,6 +236,7 @@ function promptUser() {
         
                                     }
                                 ).then(function(result) {
+                                    //Selects all the employees in a selected department
                                     connection.query("SELECT employee.first_name, employee.last_name, roles.title, department.name AS Department FROM employee JOIN roles JOIN department ON employee.role_id = roles.role_id AND roles.department_id = department.department_id WHERE department.name = ?",result.department, function(err,data) {
                                         if(err) {
                                             throw err;
@@ -236,6 +250,7 @@ function promptUser() {
                             break;
 
                         case "Manager":
+                            //User inputs the name of the manager that want to look up
                             inquirer.prompt( 
                                 {
                                     name: "manager",
@@ -249,9 +264,11 @@ function promptUser() {
                                     if(err) {
                                         throw err;
                                     }else {
+                                        //selecting all employees under the selected manager
                                     connection.query("SELECT employee.first_name, employee.last_name, roles.title FROM employee JOIN roles ON employee.role_id = roles.role_id WHERE manager_id = ?", [data[0].employee_id], function(err,data) {
                                         if(err) {
                                          throw err;
+                                         //selected manager is not in the employee table it will not execute
                                         }else if (data.length === 0) {
                                             console.log("Not a manager");
                                         }else {
@@ -262,12 +279,13 @@ function promptUser() {
                                 }})
                             })  
                         default:
-
+                            break;
                         }
                         
                 });
                 break;
             case "Budget":
+                //Selects the department
                 connection.query("SELECT * FROM department", function (err, response) {
                     if(err) {
                         throw err;
@@ -285,6 +303,7 @@ function promptUser() {
                             }
                         }
                     ).then(function(answer) {
+                        //Selects all employees in the department and sums their salarys to give the department budget
                         connection.query("SELECT department.name AS Department, SUM(roles.salary) AS Total_Budget FROM employee JOIN roles JOIN department ON employee.role_id = roles.role_id AND roles.department_id = department.department_id WHERE department.name = ?", answer.addWhere, function(err,data) {
                             if(err) {
                                 throw err;
@@ -297,6 +316,7 @@ function promptUser() {
                 })
                 break;
             case "Update Records":
+                //Selects department
                 connection.query("SELECT * FROM department", function (err, response) {
                     let departmentInfo = response
                     if(err) {
@@ -315,6 +335,7 @@ function promptUser() {
                             }
                         }
                     ).then(function(answer) {
+                        //Selects employees in the selected department and displays them as choices for the user
                         connection.query("SELECT employee.employee_id, employee.first_name, employee.last_name, roles.title, department.name FROM employee JOIN roles JOIN department ON employee.role_id = roles.role_id AND roles.department_id = department.department_id WHERE department.name = ?",answer.addWhere, function(err,data) {
                             if(err) {
                                 throw err;
@@ -331,7 +352,7 @@ function promptUser() {
                             return employeeArr;
                             }  
                         }).then(function(answer) {
-                            console.log(answer)
+                            //Creating a variable to save the users response to and then transforming it into an array to select values
                             let employeeInfo = answer.update.split("/")
                             inquirer.prompt({
                                 name: "whatupdate",
@@ -341,6 +362,7 @@ function promptUser() {
                             }).then(function(result) {
                                 switch (result.whatupdate) {
                                     case "Role":
+                                        //After selected department the user is then prompted to select which role the employee is going to change to 
                                         connection.query("SELECT roles.role_id, roles.title, department.name FROM roles LEFT JOIN department ON roles.department_id = department.department_id", function(err,response) {
                                             if(err) {
                                                 throw err;
@@ -350,6 +372,7 @@ function promptUser() {
                                                     messsage: "What is the role you would like to move this employee to?",
                                                     type: "list",
                                                     choices: function() {
+                                                        //loops through all roles
                                                         let roleArr = [];
                                                         for (let i = 0; i < response.length; i++) {
                                                             roleArr.push(response[i].role_id + "/" + response[i].title + "/" + response[i].name );
@@ -357,7 +380,9 @@ function promptUser() {
                                                         return roleArr;
                                                         } 
                                                         }).then(function(answer) {
+                                                            //Create vaiable to save answer to and transform into an array in order to select values from them
                                                             let roleInfo = answer.whichRole.split("/")
+                                                            //updates selected employee with new role
                                                             connection.query("UPDATE employee SET employee.role_id = ? WHERE employee.employee_id = ?", [roleInfo[0], employeeInfo[0]], function(err, data) {
                                                                 if(err) {
                                                                     throw err;
