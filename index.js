@@ -465,6 +465,7 @@ function promptUser() {
                                     }else {
                                         console.log("Employee was deleted!")
                                     }
+                                    promptUser();
                                 })
                             })
                             break;
@@ -480,6 +481,7 @@ function promptUser() {
                                     }else {
                                         console.log("Role was deleted!")
                                     }
+                                    promptUser();
                                 })
                             })
                             break;
@@ -495,6 +497,7 @@ function promptUser() {
                                     }else {
                                         console.log("department was deleted!")
                                     }
+                                    promptUser();
                                 })
                             })
                             break;
